@@ -16,13 +16,27 @@ using namespace stacsos::kernel::sched;
 using namespace stacsos::kernel::sched::alg;
 
 void round_robin::add_to_runqueue(tcb &tcb) { 
-    panic("TODO"); 
+    runqueue_.append(&tcb);
+    //panic("TODO"); 
 }
 
 void round_robin::remove_from_runqueue(tcb &tcb) { 
-    panic("TODO"); 
+    runqueue_.remove(&tcb);
+    //panic("TODO"); 
 }
 
 tcb *round_robin::select_next_task(tcb *current) { 
-    panic("TODO"); 
+    if (runqueue_.empty()) {
+		return nullptr;
+	}
+
+	if (runqueue_.count() == 1) {
+		return runqueue_.first();
+	}
+
+    tcb* first = runqueue_.dequeue();
+    runqueue_.append(first);
+
+    return first;
+    //panic("TODO"); 
 }
