@@ -17,12 +17,10 @@ using namespace stacsos::kernel::sched::alg;
 
 void round_robin::add_to_runqueue(tcb &tcb) { 
     runqueue_.append(&tcb);
-    //panic("TODO"); 
 }
 
 void round_robin::remove_from_runqueue(tcb &tcb) { 
     runqueue_.remove(&tcb);
-    //panic("TODO"); 
 }
 
 tcb *round_robin::select_next_task(tcb *current) { 
@@ -37,6 +35,5 @@ tcb *round_robin::select_next_task(tcb *current) {
     tcb* first = runqueue_.dequeue();
     runqueue_.append(first);
 
-    return first;
-    //panic("TODO"); 
+    return first; 
 }
