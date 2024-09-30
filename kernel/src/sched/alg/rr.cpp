@@ -7,33 +7,37 @@
  */
 #include <stacsos/kernel/sched/alg/rr.h>
 
-// *** COURSEWORK NOTE *** //
-// This will be where you are implementing your round-robin scheduling algorithm.
-// Please edit this file in any way you see fit.  You may also edit the rr.h
-// header file.
-
 using namespace stacsos::kernel::sched;
 using namespace stacsos::kernel::sched::alg;
 
+/* Called by the scheduling core when a thread becomes eligible to run on the CPU .*/
 void round_robin::add_to_runqueue(tcb &tcb) { 
     runqueue_.append(&tcb);
 }
 
+/* Called by the scheduling core when a thread is no longer eligible to run. */
 void round_robin::remove_from_runqueue(tcb &tcb) { 
     runqueue_.remove(&tcb);
 }
 
-tcb *round_robin::select_next_task(tcb *current) { 
+/* Called by the scheduler core when it is time for a new task to run.
+ *
+ * Dequeues the first task and appends it to the end of the runqueue, then returns the new first task of the runqueue.
+ */
+tcb *round_robin::select_next_task(tcb *current) {
+
+    //For the case when there are no tasks to do
     if (runqueue_.empty()) {
 		return nullptr;
 	}
 
+    //For the case when the runqueue is of size 1
 	if (runqueue_.count() == 1) {
 		return runqueue_.first();
 	}
 
     tcb* first = runqueue_.dequeue();
-    runqueue_.append(first);
+    runqueue_.append(first); //Could have used .append() or .enqueue(); both append the element to the end of the list (as per the stacsos specification).
 
     return first; 
 }
