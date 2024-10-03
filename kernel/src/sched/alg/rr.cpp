@@ -23,6 +23,7 @@ void round_robin::remove_from_runqueue(tcb &tcb) {
 /* Called by the scheduler core when it is time for a new task to run.
  *
  * Dequeues the first task and appends it to the end of the runqueue, then returns the new first task of the runqueue.
+ * The quantum (allowance of CPU time) for the round robin is allocated in core.cpp (core::run()) (100Hz).
  */
 tcb *round_robin::select_next_task(tcb *current) {
 
