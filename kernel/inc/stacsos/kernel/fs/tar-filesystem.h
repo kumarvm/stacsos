@@ -64,6 +64,19 @@ public:
 	virtual shared_ptr<file> open() override { return shared_ptr<file>(new tarfs_file((tar_filesystem &)fs(), data_start_, data_size_)); }
 	virtual fs_node *mkdir(const char *name) override;
 
+	/* Created these extra functions so that in syscall.cpp, tarfs_node* are not casted to fs_node (which isn't generalisable/safe).
+	   These functions allow the access of a fs_node* through indexing. 
+	   
+	   Also added the required additional members of a tarfs_node object. 
+	*/
+	virtual list<tarfs_node*> get_children() { return children_; }
+	virtual int get_num_children() { return children_.count(); }
+	virtual u64 get_size() { return data_size_; }
+	virtual fs_node* get_child_fsnode(int i) { return this->get_children().at(i); } 
+	virtual u64 get_child_size(int i) { return this->get_children().at(i)->get_size(); }
+	virtual string get_name() { return name_; }
+	virtual fs_node_kind get_kind() { return kind_; }
+
 protected:
 	virtual fs_node *resolve_child(const string &name) override;
 
@@ -72,6 +85,8 @@ private:
 	{
 		auto *node = new tarfs_node(fs(), this, kind, name, data_start, data_size);
 		children_.append(node);
+		name_ = name;
+		kind_ = kind;
 		return node;
 	}
 
@@ -79,6 +94,8 @@ private:
 
 	list<tarfs_node *> children_;
 	u64 data_start_, data_size_;
+	string name_;
+	fs_node_kind kind_;
 };
 
 class tar_filesystem : public physical_filesystem {

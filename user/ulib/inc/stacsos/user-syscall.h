@@ -87,6 +87,20 @@ public:
 
 	static void poweroff() { syscall0(syscall_numbers::poweroff); }
 
+	/**
+	 * @brief - functions calls syscall4 (4 extra parameters)
+	 * 
+	 * @param path - path of directory
+	 * @param is_l - toggle for -l flag
+	 * @param is_a - toggle for -a flag
+	 * @param is_U - toggle for -U flag
+	 * @return fa_result - result of syscall
+	 */
+	static fa_result listdir_(const char* path, bool is_l, bool is_a, bool is_U) {
+		auto r = syscall4(syscall_numbers::listdir_, (u64)path, (u64)is_l, (u64)is_a, (u64)is_U);
+		return fa_result { r.code, r.data };
+	}
+
 private:
 	static syscall_result syscall0(syscall_numbers id)
 	{

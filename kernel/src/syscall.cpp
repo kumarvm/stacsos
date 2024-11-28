@@ -9,6 +9,9 @@
 #include <stacsos/kernel/arch/x86/pio.h>
 #include <stacsos/kernel/debug.h>
 #include <stacsos/kernel/fs/vfs.h>
+#include <stacsos/kernel/fs/filesystem.h>
+#include <stacsos/kernel/fs/fs-node.h>
+#include <stacsos/kernel/fs/tar-filesystem.h>
 #include <stacsos/kernel/mem/address-space.h>
 #include <stacsos/kernel/obj/object-manager.h>
 #include <stacsos/kernel/obj/object.h>
@@ -17,6 +20,9 @@
 #include <stacsos/kernel/sched/sleeper.h>
 #include <stacsos/kernel/sched/thread.h>
 #include <stacsos/syscalls.h>
+#include <stacsos/string.h>
+#include <stacsos/list.h>
+#include <stacsos/kernel/fs/directory.h>
 
 using namespace stacsos;
 using namespace stacsos::kernel;
@@ -40,6 +46,48 @@ static syscall_result do_open(process &owner, const char *path)
 
 	auto file_object = object_manager::get().create_file_object(owner, file);
 	return syscall_result { syscall_result_code::ok, file_object->id() };
+}
+
+/**
+ * @brief Handles retrieval of all information of directory and places it in a new instance of directory.h.
+ * 
+ * @param owner - the current process
+ * @param names - ptr to a list of file names
+ * @param sizes - ptr to a list of file sizes
+ * @param kinds - ptr to a list of file kinds
+ * @param path - path of directory 
+ * @param is_l - toggle for -l flag
+ * @param is_a - toggle for -a flag
+ * @param is_U - toggle for -U flag
+ * @return syscall_result 
+ */
+static syscall_result listdir_(process &owner, list<string> *names, list<u64> *sizes, list<fs_node_kind> *kinds, const char* path, bool is_l, bool is_a, bool is_U) {
+	tarfs_node* node = (tarfs_node*)vfs::get().lookup(path);
+	if (node != nullptr) {
+		int number_of_children = node->get_num_children();
+
+		/* Since STACSOS has no concept of the current directory (as per the specification) it seemed appropriate not to include the implied ./ & ../ */
+		for (int i = 1; i < number_of_children; i++) {
+			fs_node* fs_node = node->get_child_fsnode(i);
+
+			stacsos::string name = fs_node->name();
+			(*names).append(name);
+
+			fs_node_kind type = fs_node->kind();
+			(*kinds).append(type);
+	
+			u64 size = node->get_child_size(i);
+			(*sizes).append(size);
+		}
+		
+		//Creates a directory.h object and created a shared ptr which allows the object to be accessed in user space via object manager.
+		auto directory = new fs::directory(*names, *sizes, *kinds, (*names).count(), is_l, is_a, is_U);
+		auto ptr = new shared_ptr<fs::directory>(directory);
+		auto directory_object = object_manager::get().create_directory_object(owner, *ptr);
+		return syscall_result { syscall_result_code::ok, directory_object->id() };
+	}
+
+	return syscall_result { syscall_result_code::not_found, 0 };
 }
 
 static syscall_result operation_result_to_syscall_result(operation_result &&o)
@@ -180,6 +228,14 @@ extern "C" syscall_result handle_syscall(syscall_numbers index, u64 arg0, u64 ar
 	case syscall_numbers::poweroff: {
 		pio::outw(0x604, 0x2000);
 		return syscall_result { syscall_result_code::ok, 0 };
+	}
+
+	//Calls static listdir_ function at top of syscall.cpp file
+	case syscall_numbers::listdir_: {
+		list<string> names;
+		list<u64> sizes;
+		list<fs_node_kind> kinds;
+		return listdir_(current_process, &names, &sizes, &kinds, (const char *)arg0, (bool)arg1, (bool)arg2, (bool)arg3);
 	}
 
 	default:

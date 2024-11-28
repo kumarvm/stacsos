@@ -48,6 +48,15 @@ public:
 		return register_object(owner, new file_object(allocate_id(owner), file));
 	}
 
+	/**
+	 * Creates a directory object and registers the object with its associated process. This allows the user space to retrieve the object
+	 * by ID from the object manager since the ID is passed back as part of syscall_result and fa_result.
+	 */
+	shared_ptr<object> create_directory_object(sched::process &owner, shared_ptr<fs::directory> dir)
+	{
+		return register_object(owner, new directory_object(allocate_id(owner), dir));
+	}
+
 	shared_ptr<object> create_process_object(sched::process &owner, shared_ptr<sched::process> proc)
 	{
 		return register_object(owner, new process_object(allocate_id(owner), proc));

@@ -11,6 +11,7 @@ namespace stacsos {
 class object {
 public:
 	static object *open(const char *path);
+	static object* listdir_(const char* path, bool is_l, bool is_a, bool is_U);
 
 	virtual ~object();
 

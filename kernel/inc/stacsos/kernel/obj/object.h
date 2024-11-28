@@ -8,6 +8,7 @@
 #pragma once
 
 #include <stacsos/kernel/fs/file.h>
+#include <stacsos/kernel/fs/directory.h>
 #include <stacsos/kernel/sched/process.h>
 #include <stacsos/kernel/sched/thread.h>
 #include <stacsos/memory.h>
@@ -63,6 +64,21 @@ public:
 
 private:
 	shared_ptr<fs::file> file_;
+};
+
+//Directory object class (subclass of object)
+class directory_object : public object {
+public:
+	directory_object(u64 id, shared_ptr<fs::directory> dir)
+		: object(id)
+		, directory_(dir)
+	{
+	}
+
+	virtual operation_result read(void *buffer, size_t length) { return operation_result::ok(directory_->read((char*)buffer, length)); }
+
+private:
+	shared_ptr<fs::directory> directory_;
 };
 
 class process_object : public object {
